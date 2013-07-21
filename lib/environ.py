@@ -4,6 +4,16 @@ ROOT_PATH = os.path.normpath(os.path.join(os.path.abspath(os.path.dirname(__file
 DATASTORE_PATH = os.path.join(ROOT_PATH, 'tmp', 'data')
 
 
+def _resolve_symlink(path):
+    """Returns the parent directory of the given file, resolving a symlink\
+ if needed"""
+    parent = os.path.dirname(path)
+    if os.path.islink(path):
+        true_path = os.path.abspath(os.path.join(parent, os.readlink(path)))
+        return os.path.dirname(true_path)
+    else:
+        return parent
+
 def setup_environ():
 
     # lib
@@ -14,10 +24,7 @@ def setup_environ():
     sdk_path = None
     for path in os.environ.get('PATH').split(os.pathsep):
         if 'dev_appserver.py' in os.listdir(path):
-            test_path = os.path.join(path, 'dev_appserver.py')
-            sdk_path = os.path.dirname(
-                os.readlink(test_path) if \
-                    os.path.islink(test_path) else test_path)
+            sdk_path = _resolve_symlink(os.path.join(path, 'dev_appserver.py'))
             break
 
     if not sdk_path:
